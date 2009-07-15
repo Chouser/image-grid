@@ -82,51 +82,53 @@ function redraw() {
   ctx.stroke();
 }
 
+function drag(func) {
+  body.onmousemove = function(e) {
+    func(e);
+    redraw();
+  };
+
+  body.onmouseup = function(e) {
+    body.onmousemove = null;
+    body.onmouseup = null;
+    func(e);
+    redraw();
+  }
+}
+
 window.onload = function() {
   body = document.body;
   body.onclick = redraw;
 
   body.onmousedown = function(e) {
-    if(e.shiftKey) {
-      var oldGridX = gridX;
-      var oldGridY = gridY;
-      var startX = e.clientX;
-      var startY = e.clientY;
+    var startX = e.clientX;
+    var startY = e.clientY;
 
-      function updateGrid(e) {
-        gridX = oldGridX + (e.clientX - startX) / scale;
-        gridY = oldGridY + (e.clientY - startY) / scale;
-        redraw();
-      }
-
-      body.onmousemove = function(e) {
-        updateGrid(e);
-      };
-
-      body.onmouseup = function(e) {
-        updateGrid(e);
-        body.onmousemove = null;
-        body.onmouseup = null;
-      }
+    if(e.ctrlKey) {
+      // scale everything
+      var oldScale = scale;
+      drag(function(e) {
+        scale = oldScale + (e.clientX - startX + e.clientY - startY) * 0.001;
+      });
     }
     else {
-      var baseX = imgX - e.clientX;
-      var baseY = imgY - e.clientY;
-
-      function updateImg(e) {
-        imgX = baseX + e.clientX;
-        imgY = baseY + e.clientY;
-        redraw();
+      if(e.shiftKey) {
+        // drag grid
+        var oldGridX = gridX;
+        var oldGridY = gridY;
+        drag(function(e) {
+          gridX = oldGridX + (e.clientX - startX) / scale;
+          gridY = oldGridY + (e.clientY - startY) / scale;
+        });
       }
-
-      body.onmousemove = function(e) {
-        updateImg(e);
-      };
-
-      body.onmouseup = function(e) {
-        updateImg(e);
-        body.onmousemove = null;
-        body.onmouseup = null;
+      else {
+        // drag everything
+        var baseX = imgX - startX;
+        var baseY = imgY - startY;
+        drag(function(e) {
+          imgX = baseX + e.clientX;
+          imgY = baseY + e.clientY;
+        });
       }
     }
   };
