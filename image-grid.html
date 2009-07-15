@@ -23,6 +23,9 @@
       img {
         display: none;
       }
+      #msg {
+        position: absolute;
+      }
     </style>
     <script type="text/javascript">//<![CDATA[
 
@@ -50,6 +53,9 @@ var body;
 var shade = 0;
 var imgX = 0;
 var imgY = 0;
+var gridX = 0;
+var gridY = 0;
+var scale = 0.3;
 
 function redraw() {
   var img = document.getElementById('img');
@@ -60,13 +66,13 @@ function redraw() {
   ctx = c1.getContext("2d");
 
   ctx.translate( imgX, imgY );
-  ctx.scale( 0.3, 0.3 );
+  ctx.scale( scale, scale );
 
   ctx.drawImage(document.getElementById('img'), 0, 0);
 
   ctx.beginPath();
-  drawGrid(ctx, 0, 50, 300,   50, 50, img.width, img.height);
-  drawGrid(ctx, 0, 50, 300/3, 10, 10, img.width, img.height);
+  drawGrid(ctx, gridX, gridY, 300,   50, 50, img.width, img.height);
+  drawGrid(ctx, gridX, gridY, 300/3, 10, 10, img.width, img.height);
   ctx.closePath();
   var x = hex[shade];
   ctx.strokeStyle = "#" + x + x + x + ";";
@@ -78,23 +84,47 @@ window.onload = function() {
   body.onclick = redraw;
 
   body.onmousedown = function(e) {
-    var baseX = imgX - e.clientX;
-    var baseY = imgY - e.clientY;
+    if(e.shiftKey) {
+      var oldGridX = gridX;
+      var oldGridY = gridY;
+      var startX = e.clientX;
+      var startY = e.clientY;
 
-    function update(e) {
-      imgX = baseX + e.clientX;
-      imgY = baseY + e.clientY;
-      redraw();
+      function updateGrid(e) {
+        gridX = oldGridX + (e.clientX - startX) / scale;
+        gridY = oldGridY + (e.clientY - startY) / scale;
+        redraw();
+      }
+
+      body.onmousemove = function(e) {
+        updateGrid(e);
+      };
+
+      body.onmouseup = function(e) {
+        updateGrid(e);
+        body.onmousemove = null;
+        body.onmouseup = null;
+      }
     }
+    else {
+      var baseX = imgX - e.clientX;
+      var baseY = imgY - e.clientY;
 
-    body.onmousemove = function(e) {
-      update(e);
-    };
+      function updateImg(e) {
+        imgX = baseX + e.clientX;
+        imgY = baseY + e.clientY;
+        redraw();
+      }
 
-    body.onmouseup = function(e) {
-      update(e);
-      body.onmousemove = null;
-      body.onmouseup = null;
+      body.onmousemove = function(e) {
+        updateImg(e);
+      };
+
+      body.onmouseup = function(e) {
+        updateImg(e);
+        body.onmousemove = null;
+        body.onmouseup = null;
+      }
     }
   };
 
@@ -107,7 +137,8 @@ window.onload = function() {
 
   <body>
     <img id="img" src="2006.08.17-09150.jpg" />
-    <canvas id="c1"></canvas><canvas id="c2"></canvas>
+    <canvas id="c1"></canvas>
+    <div id="msg"></div>
   </body>
 </html>
 
