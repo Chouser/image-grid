@@ -56,6 +56,7 @@ var imgY = 0;
 var gridX = 0;
 var gridY = 0;
 var scale = 0.3;
+var splitCount = 3;
 
 function redraw() {
   var img = document.getElementById('img');
@@ -71,8 +72,10 @@ function redraw() {
   ctx.drawImage(document.getElementById('img'), 0, 0);
 
   ctx.beginPath();
-  drawGrid(ctx, gridX, gridY, 300,   50, 50, img.width, img.height);
-  drawGrid(ctx, gridX, gridY, 300/3, 10, 10, img.width, img.height);
+  drawGrid(ctx, gridX, gridY, 300, 50, 50, img.width, img.height);
+  if(splitCount != 0) {
+    drawGrid(ctx, gridX, gridY, 300/splitCount, 10, 10, img.width, img.height);
+  }
   ctx.closePath();
   var x = hex[shade];
   ctx.strokeStyle = "#" + x + x + x + ";";
@@ -126,6 +129,13 @@ window.onload = function() {
         body.onmouseup = null;
       }
     }
+  };
+
+  body.onkeypress = function(e) {
+    if(e.keyCode >= 48)
+      if(e.keyCode <= 58)
+        splitCount = e.keyCode - 48;
+    redraw();
   };
 
   redraw();
