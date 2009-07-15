@@ -46,51 +46,60 @@ function drawGrid(ctx, ix, iy, d, xt, yt, xf, yf) {
   }
 }
 
-var frame = 0;
+var body;
+var shade = 0;
+var imgX = 0;
+var imgY = 0;
 
-function xform() {
-  ctx.translate( -35, -35 );
-  ctx.scale( 0.3, 0.3 );
-}
-
-function doframe() {
-  ctx.save();
-  xform();
-  ctx.beginPath();
-  drawGrid(ctx, 0, 50, 300,   50, 50, img.width, img.height);
-  drawGrid(ctx, 0, 50, 300/3, 10, 10, img.width, img.height);
-  ctx.closePath();
-  var x = hex[Math.abs(frame%31-15)];
-  ctx.strokeStyle = "#" + x + x + x + ";";
-  ctx.stroke();
-  ctx.restore();
-
-  frame += 1;
-  setTimeout(doframe, 200);
-}
-
-function start() {
-  var body = document.body;
+function redraw() {
   var img = document.getElementById('img');
 
   c1 = document.getElementById('c1');
   c1.width = body.offsetWidth;
   c1.height = body.offsetHeight;
-  c1.onclick = start;
   ctx = c1.getContext("2d");
 
-  ctx.save();
-  xform();
-  ctx.drawImage(document.getElementById('img'), 0, 0);
-  ctx.restore();
+  ctx.translate( imgX, imgY );
+  ctx.scale( 0.3, 0.3 );
 
-  doframe();
+  ctx.drawImage(document.getElementById('img'), 0, 0);
+
+  ctx.beginPath();
+  drawGrid(ctx, 0, 50, 300,   50, 50, img.width, img.height);
+  drawGrid(ctx, 0, 50, 300/3, 10, 10, img.width, img.height);
+  ctx.closePath();
+  var x = hex[shade];
+  ctx.strokeStyle = "#" + x + x + x + ";";
+  ctx.stroke();
 }
 
 window.onload = function() {
-  inrand = document.location.hash.substr(1).split('');
-  start();
-}
+  body = document.body;
+  body.onclick = redraw;
+
+  body.onmousedown = function(e) {
+    var baseX = imgX - e.clientX;
+    var baseY = imgY - e.clientY;
+
+    function update(e) {
+      imgX = baseX + e.clientX;
+      imgY = baseY + e.clientY;
+      redraw();
+    }
+
+    body.onmousemove = function(e) {
+      update(e);
+    };
+
+    body.onmouseup = function(e) {
+      update(e);
+      body.onmousemove = null;
+      body.onmouseup = null;
+    }
+  };
+
+  redraw();
+};
 
 //]]>
     </script>
