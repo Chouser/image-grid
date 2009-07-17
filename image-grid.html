@@ -41,10 +41,13 @@ function drawGrid(ctx, ix, iy, d, xt, yt, xf, yf) {
   var x, y;
   for(x = ix; x < xf + xt; x += d) {
     for(y = iy; y < yf + yt; y += d) {
+      ctx.beginPath();
       ctx.moveTo(x-xt,y);
       ctx.lineTo(x+xt+1,y);
       ctx.moveTo(x,y-yt);
       ctx.lineTo(x,y+yt+1);
+      ctx.closePath();
+      ctx.stroke();
     }
   }
 }
@@ -55,6 +58,7 @@ var imgX = 0;
 var imgY = 0;
 var gridX = 0;
 var gridY = 0;
+var gridSize = 300;
 var scale = 0.3;
 var splitCount = 3;
 
@@ -66,15 +70,14 @@ function redraw() {
 
   ctx.drawImage(img, 0, 0);
 
-  ctx.beginPath();
-  drawGrid(ctx, gridX, gridY, 300, 50, 50, img.width, img.height);
-  if(splitCount != 0) {
-    drawGrid(ctx, gridX, gridY, 300/splitCount, 10, 10, img.width, img.height);
-  }
-  ctx.closePath();
   var x = hex[shade];
   ctx.strokeStyle = "#" + x + x + x + ";";
-  ctx.stroke();
+  drawGrid(ctx, gridX, gridY, gridSize,
+           gridSize/2, gridSize/2, img.width, img.height);
+  if(splitCount != 0) {
+    drawGrid(ctx, gridX, gridY, gridSize/splitCount,
+             gridSize/20, gridSize/20, img.width, img.height);
+  }
   ctx.restore();
 }
 
@@ -113,15 +116,28 @@ window.onload = function() {
     var startY = e.clientY;
 
     if(e.ctrlKey) {
-      // scale everything
-      var oldScale = scale;
-      var oldImgX = imgX;
-      var oldImgY = imgY;
-      drag(function(e) {
-        scale = oldScale + (e.clientX - startX + e.clientY - startY) * 0.001;
-        imgX = oldImgX * oldScale / scale;
-        imgY = oldImgY * oldScale / scale;
-      });
+      if(e.shiftKey) {
+        // scale grid
+        var oldGridSize = gridSize;
+        drag(function(e) {
+            var delta = e.clientX - startX + e.clientY - startY;
+            gridSize = oldGridSize + delta;
+            if(gridSize < 3 || img.height / gridSize > 20)
+              gridSize = Math.round(img.height / 20);
+        });
+      }
+      else {
+        // scale everything
+        var oldScale = scale;
+        var oldImgX = imgX;
+        var oldImgY = imgY;
+        drag(function(e) {
+            var delta = e.clientX - startX + e.clientY - startY;
+            scale = oldScale + delta * 0.001;
+            imgX = startX - (startX - oldImgX) * scale / oldScale;
+            imgY = startY - (startY - oldImgY) * scale / oldScale;
+        });
+      }
     }
     else {
       if(e.shiftKey) {
@@ -129,8 +145,8 @@ window.onload = function() {
         var oldGridX = gridX;
         var oldGridY = gridY;
         drag(function(e) {
-          gridX = oldGridX + (e.clientX - startX) / scale;
-          gridY = oldGridY + (e.clientY - startY) / scale;
+          gridX = (oldGridX + (e.clientX - startX) / scale) % gridSize;
+          gridY = (oldGridY + (e.clientY - startY) / scale) % gridSize;
         });
       }
       else {
@@ -146,6 +162,7 @@ window.onload = function() {
   };
 
   body.onkeypress = function(e) {
+    // shade = Math.round(16 / (e.keyCode - 48));
     if(e.keyCode >= 48)
       if(e.keyCode <= 58)
         splitCount = e.keyCode - 48;
