@@ -39,8 +39,8 @@ var ctx, img;
 
 function drawGrid(ctx, ix, iy, d, xt, yt, xf, yf) {
   var x, y;
-  for(x = ix; x < xf + xt; x += d) {
-    for(y = iy; y < yf + yt; y += d) {
+  for(x = ix % d - d; x < xf + xt + d; x += d) {
+    for(y = iy % d - d; y < yf + yt + d; y += d) {
       ctx.beginPath();
       ctx.moveTo(x-xt,y);
       ctx.lineTo(x+xt+1,y);
@@ -145,8 +145,8 @@ window.onload = function() {
         var oldGridX = gridX;
         var oldGridY = gridY;
         drag(function(e) {
-          gridX = (oldGridX + (e.clientX - startX) / scale) % gridSize;
-          gridY = (oldGridY + (e.clientY - startY) / scale) % gridSize;
+          gridX = oldGridX + (e.clientX - startX) / scale;
+          gridY = oldGridY + (e.clientY - startY) / scale;
         });
       }
       else {
