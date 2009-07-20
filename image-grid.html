@@ -11,6 +11,8 @@
         margin: 0;
         padding: 0;
         overflow: hidden;
+        font-family: Verdana;
+        font-size: 10pt;
       }
       canvas {
         display: block;
@@ -23,8 +25,11 @@
       img {
         display: none;
       }
-      #msg {
+      #btn {
         position: absolute;
+        border: 2px outset;
+        padding: 0px 8px;
+        background: #88b;
       }
     </style>
     <script type="text/javascript">//<![CDATA[
@@ -61,6 +66,7 @@ var gridY = 0;
 var gridSize = 300;
 var scale = 0.3;
 var splitCount = 3;
+var locked = false;
 
 function redraw() {
   ctx.clearRect(0, 0, body.offsetWidth, body.offsetHeight);
@@ -115,7 +121,7 @@ window.onload = function() {
     var startX = e.clientX;
     var startY = e.clientY;
 
-    if(e.ctrlKey) {
+    if(e.ctrlKey && !locked) {
       if(e.shiftKey) {
         // scale grid
         var oldGridSize = gridSize;
@@ -127,6 +133,17 @@ window.onload = function() {
         });
       }
       else {
+        // drag grid
+        var oldGridX = gridX;
+        var oldGridY = gridY;
+        drag(function(e) {
+          gridX = oldGridX + (e.clientX - startX) / scale;
+          gridY = oldGridY + (e.clientY - startY) / scale;
+        });
+      }
+    }
+    else {
+      if(e.shiftKey) {
         // scale everything
         var oldScale = scale;
         var oldImgX = imgX;
@@ -136,17 +153,6 @@ window.onload = function() {
             scale = oldScale + delta * 0.001;
             imgX = startX - (startX - oldImgX) * scale / oldScale;
             imgY = startY - (startY - oldImgY) * scale / oldScale;
-        });
-      }
-    }
-    else {
-      if(e.shiftKey) {
-        // drag grid
-        var oldGridX = gridX;
-        var oldGridY = gridY;
-        drag(function(e) {
-          gridX = oldGridX + (e.clientX - startX) / scale;
-          gridY = oldGridY + (e.clientY - startY) / scale;
         });
       }
       else {
@@ -163,13 +169,19 @@ window.onload = function() {
 
   body.onkeypress = function(e) {
     // shade = Math.round(16 / (e.keyCode - 48));
-    if(e.keyCode >= 48)
-      if(e.keyCode <= 58)
-        splitCount = e.keyCode - 48;
+    if(e.keyCode >= 48 && e.keyCode <= 58)
+      splitCount = e.keyCode - 48;
     redraw();
   };
 
   body.onkeydown = function(e) {
+    if(e.keyCode == 9) {
+      if(!locked || confirm("Are you sure you want to unlock the grid")) {
+        locked = !locked;
+        btn.innerHTML = "Grid" + (locked ? " <b>locked</b>" : "");
+        e.preventDefault();
+      }
+    }
     var dx = e.keyCode == 37 ? -1 : e.keyCode == 39 ? 1 : 0;
     var dy = e.keyCode == 38 ? -1 : e.keyCode == 40 ? 1 : 0;
     if(e.shiftKey) {
@@ -195,7 +207,7 @@ window.onresize = resize;
   <body>
     <img id="img" src="2006.08.17-09150.jpg" />
     <canvas id="c1"></canvas>
-    <div id="msg"></div>
+    <div id="btn">Grid</div>
   </body>
 </html>
 
