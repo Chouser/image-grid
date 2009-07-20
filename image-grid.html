@@ -169,6 +169,20 @@ window.onload = function() {
     redraw();
   };
 
+  body.onkeydown = function(e) {
+    var dx = e.keyCode == 37 ? -1 : e.keyCode == 39 ? 1 : 0;
+    var dy = e.keyCode == 38 ? -1 : e.keyCode == 40 ? 1 : 0;
+    if(e.shiftKey) {
+      gridX += dx / scale;
+      gridY += dy / scale;
+    }
+    else {
+      imgX += dx / scale;
+      imgY += dy / scale;
+    }
+    redraw();
+  }
+
   resize();
 };
 
