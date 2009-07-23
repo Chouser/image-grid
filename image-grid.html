@@ -39,6 +39,28 @@
     </style>
     <script type="text/javascript">//<![CDATA[
 
+// cookie functions from http://www.quirksmode.org/js/cookies.html
+function createCookie(name,value,days) {
+	if (days) {
+		var date = new Date();
+		date.setTime(date.getTime()+(days*24*60*60*1000));
+		var expires = "; expires="+date.toGMTString();
+	}
+	else var expires = "";
+	document.cookie = name+"="+value+expires+"; path=/";
+}
+
+function readCookie(name) {
+	var nameEQ = name + "=";
+	var ca = document.cookie.split(';');
+	for(var i=0;i < ca.length;i++) {
+		var c = ca[i];
+		while (c.charAt(0)==' ') c = c.substring(1,c.length);
+		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+	}
+	return null;
+}
+
 var hex = '0123456789ABCDEF'.split('');
 var dec = {};
 for( var i = 0; i < hex.length; ++i ) {
@@ -64,30 +86,32 @@ function drawGrid(ctx, ix, iy, d, xt, yt, xf, yf) {
 
 var body;
 var shade = 0;
-var imgX = 0;
-var imgY = 0;
-var gridX = 0;
-var gridY = 0;
-var gridSize = 300;
-var scale = 0.3;
-var splitCount = 3;
 var locked = false;
+var state = {
+  x: 0,
+  y: 0,
+  gx: 0,
+  gy: 0,
+  gsize: 300,
+  scale: 300,
+  split: 3
+};
 
 function redraw() {
   ctx.clearRect(0, 0, body.offsetWidth, body.offsetHeight);
   ctx.save();
-  ctx.translate( imgX, imgY );
-  ctx.scale( scale, scale );
+  ctx.translate( state.x, state.y );
+  ctx.scale( state.scale/1000, state.scale/1000 );
 
   ctx.drawImage(img, 0, 0);
 
   var x = hex[shade];
   ctx.strokeStyle = "#" + x + x + x + ";";
-  drawGrid(ctx, gridX, gridY, gridSize,
-           gridSize/2, gridSize/2, img.width, img.height);
-  if(splitCount != 0) {
-    drawGrid(ctx, gridX, gridY, gridSize/splitCount,
-             gridSize/20, gridSize/20, img.width, img.height);
+  drawGrid(ctx, state.gx, state.gy, state.gsize,
+           state.gsize/2, state.gsize/2, img.width, img.height);
+  if(state.split != 0) {
+    drawGrid(ctx, state.gx, state.gy, state.gsize/state.split,
+             state.gsize/20, state.gsize/20, img.width, img.height);
   }
   ctx.restore();
 }
@@ -129,44 +153,45 @@ window.onload = function() {
     if(e.ctrlKey && !locked) {
       if(e.shiftKey) {
         // scale grid
-        var oldGridSize = gridSize;
+        var oldGridSize = state.gsize;
         drag(function(e) {
             var delta = e.clientX - startX + e.clientY - startY;
-            gridSize = oldGridSize + delta;
-            if(gridSize < 3 || img.height / gridSize > 20)
-              gridSize = Math.round(img.height / 20);
+            state.gsize = oldGridSize + delta;
+            if(state.gsize < 3 || img.height / state.gsize > 20)
+              state.gsize = Math.round(img.height / 20);
         });
       }
       else {
         // drag grid
-        var oldGridX = gridX;
-        var oldGridY = gridY;
+        var oldGridX = state.gx;
+        var oldGridY = state.gy;
         drag(function(e) {
-          gridX = oldGridX + (e.clientX - startX) / scale;
-          gridY = oldGridY + (e.clientY - startY) / scale;
+          state.gx = oldGridX + (e.clientX - startX) / (state.scale / 1000);
+          state.gy = oldGridY + (e.clientY - startY) / (state.scale / 1000);
         });
       }
     }
     else {
       if(e.shiftKey) {
         // scale everything
-        var oldScale = scale;
-        var oldImgX = imgX;
-        var oldImgY = imgY;
+        var oldScale = state.scale / 1000;
+        var oldImgX = state.x;
+        var oldImgY = state.y;
         drag(function(e) {
             var delta = e.clientX - startX + e.clientY - startY;
-            scale = oldScale + delta * 0.001;
-            imgX = startX - (startX - oldImgX) * scale / oldScale;
-            imgY = startY - (startY - oldImgY) * scale / oldScale;
+            var newScale = oldScale + delta * 0.001;
+            state.x = startX - (startX - oldImgX) * newScale / oldScale;
+            state.y = startY - (startY - oldImgY) * newScale / oldScale;
+            state.scale = Math.round(newScale * 1000);
         });
       }
       else {
         // drag everything
-        var baseX = imgX - startX;
-        var baseY = imgY - startY;
+        var baseX = state.x - startX;
+        var baseY = state.y - startY;
         drag(function(e) {
-          imgX = baseX + e.clientX;
-          imgY = baseY + e.clientY;
+          state.x = baseX + e.clientX;
+          state.y = baseY + e.clientY;
         });
       }
     }
@@ -175,7 +200,7 @@ window.onload = function() {
   body.onkeypress = function(e) {
     // shade = Math.round(16 / (e.keyCode - 48));
     if(e.keyCode >= 48 && e.keyCode <= 58)
-      splitCount = e.keyCode - 48;
+      state.split = e.keyCode - 48;
     redraw();
   };
 
@@ -184,18 +209,26 @@ window.onload = function() {
       if(!locked || confirm("Are you sure you want to unlock the grid")) {
         locked = !locked;
         btn.innerHTML = "Grid" + (locked ? " <b>locked</b>" : "");
+        if(locked) {
+          var str = "";
+          for(var k in state) {
+            str += k + "=" + escape(state[k]) + "&";
+          }
+          alert(str);
+          createCookie("imagegrid", str, 365);
+        }
         e.preventDefault();
       }
     }
     var dx = e.keyCode == 37 ? -1 : e.keyCode == 39 ? 1 : 0;
     var dy = e.keyCode == 38 ? -1 : e.keyCode == 40 ? 1 : 0;
-    if(e.shiftKey) {
-      gridX += dx / scale;
-      gridY += dy / scale;
+    if(e.ctrlKey) {
+      state.gx += 1000 * dx / state.scale;
+      state.gy += 1000 * dy / state.scale;
     }
     else {
-      imgX += dx / scale;
-      imgY += dy / scale;
+      state.x += 1000 * dx / state.scale;
+      state.y += 1000 * dy / state.scale;
     }
     redraw();
   }
