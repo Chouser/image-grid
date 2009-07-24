@@ -19,9 +19,6 @@
         top: 0;
         position: absolute;
       }
-      div {
-        text-align: center;
-      }
       img {
         display: none;
       }
@@ -32,33 +29,28 @@
         background: #88b;
       }
       #btn {
-        text-align: left;
         cursor: pointer;
         font-weight: bold;
+      }
+      #bookit {
+        position: absolute;
+        top: 20%;
+        left: 20%;
+        background: #aaa;
+        padding: 1em 2em;
+        opacity: 0.8;
+        font-weight: bold;
+        border: 1px #000 solid;
+      }
+      #bookit div {
+        text-align: right;
+        margin-top: 1em;
       }
     </style>
     <script type="text/javascript">//<![CDATA[
 
-// cookie functions from http://www.quirksmode.org/js/cookies.html
-function createCookie(name,value,days) {
-	if (days) {
-		var date = new Date();
-		date.setTime(date.getTime()+(days*24*60*60*1000));
-		var expires = "; expires="+date.toGMTString();
-	}
-	else var expires = "";
-	document.cookie = name+"="+value+expires+"; path=/";
-}
-
-function readCookie(name) {
-	var nameEQ = name + "=";
-	var ca = document.cookie.split(';');
-	for(var i=0;i < ca.length;i++) {
-		var c = ca[i];
-		while (c.charAt(0)==' ') c = c.substring(1,c.length);
-		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-	}
-	return null;
+function $(id) {
+  return document.getElementById(id);
 }
 
 var hex = '0123456789ABCDEF'.split('');
@@ -94,7 +86,8 @@ var state = {
   gy: 0,
   gsize: 300,
   scale: 300,
-  split: 3
+  split: 3,
+  img: "2006.08.17-09150.jpg"
 };
 
 function redraw() {
@@ -131,9 +124,9 @@ function drag(func) {
 }
 
 function resize() {
-  img = document.getElementById('img');
+  img = $('img');
 
-  var c1 = document.getElementById('c1');
+  var c1 = $('c1');
   c1.width = body.offsetWidth;
   c1.height = body.offsetHeight;
 
@@ -143,8 +136,15 @@ function resize() {
 }
 
 window.onload = function() {
+  var pair, pairs = document.location.hash.substr(1).split("&");
+  for( var i = 0; i < pairs.length; ++i) {
+    pair = pairs[i].split("=");
+    state[pair[0]] = (typeof state[pair[0]] == "string")
+      ? pair[1] : parseInt(pair[1]);
+  }
+  $('img').src = state.img;
+
   body = document.body;
-  body.onclick = redraw;
 
   body.onmousedown = function(e) {
     var startX = e.clientX;
@@ -166,8 +166,10 @@ window.onload = function() {
         var oldGridX = state.gx;
         var oldGridY = state.gy;
         drag(function(e) {
-          state.gx = oldGridX + (e.clientX - startX) / (state.scale / 1000);
-          state.gy = oldGridY + (e.clientY - startY) / (state.scale / 1000);
+          state.gx =
+            Math.round(oldGridX + (e.clientX - startX) / (state.scale / 1000));
+          state.gy =
+            Math.round(oldGridY + (e.clientY - startY) / (state.scale / 1000));
         });
       }
     }
@@ -180,8 +182,10 @@ window.onload = function() {
         drag(function(e) {
             var delta = e.clientX - startX + e.clientY - startY;
             var newScale = oldScale + delta * 0.001;
-            state.x = startX - (startX - oldImgX) * newScale / oldScale;
-            state.y = startY - (startY - oldImgY) * newScale / oldScale;
+            state.x =
+              Math.round(startX - (startX - oldImgX) * newScale / oldScale);
+            state.y =
+              Math.round(startY - (startY - oldImgY) * newScale / oldScale);
             state.scale = Math.round(newScale * 1000);
         });
       }
@@ -212,10 +216,14 @@ window.onload = function() {
         if(locked) {
           var str = "";
           for(var k in state) {
-            str += k + "=" + escape(state[k]) + "&";
+            if(str) str += "&";
+            str += k + "=" + escape(state[k]);
           }
-          alert(str);
-          createCookie("imagegrid", str, 365);
+          document.location.hash = "#" + str;
+          $('bookit').style.display = '';
+          $('bookit').getElementsByTagName('button')[0].onclick = function() {
+            $('bookit').style.display = 'none';
+          };
         }
         e.preventDefault();
       }
@@ -223,25 +231,26 @@ window.onload = function() {
     var dx = e.keyCode == 37 ? -1 : e.keyCode == 39 ? 1 : 0;
     var dy = e.keyCode == 38 ? -1 : e.keyCode == 40 ? 1 : 0;
     if(e.ctrlKey) {
-      state.gx += 1000 * dx / state.scale;
-      state.gy += 1000 * dy / state.scale;
+      state.gx += Math.round(1000 * dx / state.scale);
+      state.gy += Math.round(1000 * dy / state.scale);
     }
     else {
-      state.x += 1000 * dx / state.scale;
-      state.y += 1000 * dy / state.scale;
+      state.x += Math.round(1000 * dx / state.scale);
+      state.y += Math.round(1000 * dy / state.scale);
     }
     redraw();
   }
 
   function newfile(e) {
-    img.src = document.getElementById('file').value;
+    state.img = $('file').value;
+    img.src = $('file').value;
     redraw()
   }
 
-  document.getElementById('file').onchange = newfile;
+  $('file').onchange = newfile;
 
-  document.getElementById('btn').onclick = function(e) {
-    var mc = document.getElementById('menu-contents');
+  $('btn').onclick = function(e) {
+    var mc = $('menu-contents');
     mc.style.display =
       (mc.style.display == 'none') ? '' : 'none';
   }
@@ -256,13 +265,18 @@ window.onresize = resize;
   </head>
 
   <body>
-    <img id="img" src="2006.08.17-09150.jpg" />
+    <img id="img" />
     <canvas id="c1"></canvas>
     <div id="menu">
       <div id="btn">Grid</div>
       <table id="menu-contents" style="display: none">
         <tr><td>Image file:</td><td><input size="30" id="file" /></td></tr>
       </table>
+    </div>
+    <div id="bookit" style="display: none">
+      Bookmark this page now to save your grid!<br />
+      When you're done, click Continue.
+      <div><button>Continue</button></div>
     </div>
   </body>
 </html>
