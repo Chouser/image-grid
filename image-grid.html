@@ -150,15 +150,15 @@ window.onload = function() {
     var startX = e.clientX;
     var startY = e.clientY;
 
-    if(e.ctrlKey && !locked) {
+    if(e.altKey && !locked) {
       if(e.shiftKey) {
         // scale grid
         var oldGridSize = state.gsize;
         drag(function(e) {
             var delta = e.clientX - startX + e.clientY - startY;
             state.gsize = oldGridSize + delta;
-            if(state.gsize < 3 || img.height / state.gsize > 20)
-              state.gsize = Math.round(img.height / 20);
+            if(state.gsize < 3 || img.height / state.gsize > 40)
+              state.gsize = Math.round(img.height / 40);
         });
       }
       else {
@@ -230,7 +230,7 @@ window.onload = function() {
     }
     var dx = e.keyCode == 37 ? -1 : e.keyCode == 39 ? 1 : 0;
     var dy = e.keyCode == 38 ? -1 : e.keyCode == 40 ? 1 : 0;
-    if(e.ctrlKey) {
+    if(e.altKey && !locked) {
       state.gx += Math.round(1000 * dx / state.scale);
       state.gy += Math.round(1000 * dy / state.scale);
     }
@@ -278,6 +278,13 @@ window.onresize = resize;
       When you're done, click Continue.
       <div><button>Continue</button></div>
     </div>
+
+    <!--
+    TODO:
+    - turn grid off
+    - zoom with keyboard
+    - help text
+    -->
   </body>
 </html>
 
