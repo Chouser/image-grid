@@ -79,6 +79,7 @@ function drawGrid(ctx, ix, iy, d, xt, yt, xf, yf) {
 var body;
 var shade = 0;
 var locked = false;
+var showgrid = true;
 var state = {
   x: 0,
   y: 0,
@@ -98,13 +99,15 @@ function redraw() {
 
   ctx.drawImage(img, 0, 0);
 
-  var x = hex[shade];
-  ctx.strokeStyle = "#" + x + x + x + ";";
-  drawGrid(ctx, state.gx, state.gy, state.gsize,
-           state.gsize/2, state.gsize/2, img.width, img.height);
-  if(state.split != 0) {
-    drawGrid(ctx, state.gx, state.gy, state.gsize/state.split,
-             state.gsize/20, state.gsize/20, img.width, img.height);
+  if(showgrid) {
+    var x = hex[shade];
+    ctx.strokeStyle = "#" + x + x + x + ";";
+    drawGrid(ctx, state.gx, state.gy, state.gsize,
+             state.gsize/2, state.gsize/2, img.width, img.height);
+    if(state.split != 0) {
+      drawGrid(ctx, state.gx, state.gy, state.gsize/state.split,
+               state.gsize/20, state.gsize/20, img.width, img.height);
+    }
   }
   ctx.restore();
 }
@@ -225,8 +228,11 @@ window.onload = function() {
             $('bookit').style.display = 'none';
           };
         }
-        e.preventDefault();
       }
+      e.preventDefault();
+    }
+    else if(e.keyCode == 32) {
+      showgrid = !showgrid;
     }
     var dx = e.keyCode == 37 ? -1 : e.keyCode == 39 ? 1 : 0;
     var dy = e.keyCode == 38 ? -1 : e.keyCode == 40 ? 1 : 0;
@@ -281,9 +287,9 @@ window.onresize = resize;
 
     <!--
     TODO:
-    - turn grid off
     - zoom with keyboard
     - help text
+    - re-pan after file load
     -->
   </body>
 </html>
